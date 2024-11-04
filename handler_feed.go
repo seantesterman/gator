@@ -45,7 +45,7 @@ func handlerAddFeed(s *state, cmd command, user database.User) error {
 	}
 
 	fmt.Println("Feed created successfully:")
-	printFeed2(feed)
+	printFeed(feed, user)
 	fmt.Println("Feed followed successfully:")
 	printFeedFollow(feedFollow.UserName, feedFollow.FeedName)
 	fmt.Println("=====================================")
@@ -53,16 +53,14 @@ func handlerAddFeed(s *state, cmd command, user database.User) error {
 	return nil
 }
 
-func printFeed(feed database.GetFeedsRow) {
-	fmt.Printf("* Name:          %s\n", feed.FeedName)
-	fmt.Printf("* URL:           %s\n", feed.FeedUrl)
-	fmt.Printf("* User:      %s\n", feed.UserName)
-}
-
-func printFeed2(feed database.Feed) {
+func printFeed(feed database.Feed, user database.User) {
+	fmt.Printf("* ID:            %s\n", feed.ID)
+	fmt.Printf("* Created:       %v\n", feed.CreatedAt)
+	fmt.Printf("* Updated:       %v\n", feed.UpdatedAt)
 	fmt.Printf("* Name:          %s\n", feed.Name)
 	fmt.Printf("* URL:           %s\n", feed.Url)
-	fmt.Printf("* UserID:      %s\n", feed.UserID)
+	fmt.Printf("* User:          %s\n", user.Name)
+	fmt.Printf("* LastFetchedAt: %v\n", feed.LastFetchedAt.Time)
 }
 
 func handlerListFeeds(s *state, cmd command) error {
@@ -78,7 +76,11 @@ func handlerListFeeds(s *state, cmd command) error {
 
 	fmt.Printf("Found %d feeds:\n", len(feeds))
 	for _, feed := range feeds {
-		printFeed(feed) // Note: no need to pass user anymore
+		user, err := s.db.GetUserById(context.Background(), feed.UserID)
+		if err != nil {
+			return fmt.Errorf("couldn't get user: %w", err)
+		}
+		printFeed(feed, user)
 		fmt.Println("=====================================")
 	}
 	return nil

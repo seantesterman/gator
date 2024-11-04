@@ -70,27 +70,27 @@ func (q *Queries) GetFeedByURL(ctx context.Context, url string) (Feed, error) {
 }
 
 const getFeeds = `-- name: GetFeeds :many
-SELECT f.name as feed_name, f.url as feed_url, u.name as user_name
-FROM feeds f
-JOIN users u ON f.user_id = u.id
+SELECT id, created_at, updated_at, name, url, user_id, last_fetched_at FROM feeds
 `
 
-type GetFeedsRow struct {
-	FeedName string
-	FeedUrl  string
-	UserName string
-}
-
-func (q *Queries) GetFeeds(ctx context.Context) ([]GetFeedsRow, error) {
+func (q *Queries) GetFeeds(ctx context.Context) ([]Feed, error) {
 	rows, err := q.db.QueryContext(ctx, getFeeds)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []GetFeedsRow
+	var items []Feed
 	for rows.Next() {
-		var i GetFeedsRow
-		if err := rows.Scan(&i.FeedName, &i.FeedUrl, &i.UserName); err != nil {
+		var i Feed
+		if err := rows.Scan(
+			&i.ID,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.Name,
+			&i.Url,
+			&i.UserID,
+			&i.LastFetchedAt,
+		); err != nil {
 			return nil, err
 		}
 		items = append(items, i)
